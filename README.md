@@ -36,7 +36,7 @@
 
 ### 方式一：直接使用成品包（推荐普通用户）
 
-到 [Releases](https://github.com/Ar1350/chat-app/releases) 下载：
+到仓库的 [release/](release) 目录下载成品包（点击文件名 → Download 即可）：
 
 | 文件 | 适用 | 说明 |
 | --- | --- | --- |
