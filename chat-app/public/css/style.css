@@ -144,6 +144,8 @@ input, textarea { font-family: inherit; outline: none; }
 #register-form .reg-field { margin-top: 12px; }
 #register-form .login-btn { margin-top: 16px; }
 #register-form .avatar-picker { margin: 14px 0 4px; }
+.reg-row { display: flex; gap: 12px; }
+.reg-row .login-input { flex: 1; margin-top: 0; }
 
 .admin-link {
   display: inline-block;

@@ -39,6 +39,16 @@
                placeholder="账号（2-20 位字母/数字/下划线/中文）" autocomplete="off">
         <input type="text" id="reg-realname" class="login-input reg-field pwd-gap" maxlength="12"
                placeholder="实际名字（聊天中显示的昵称）" autocomplete="off">
+        <div class="reg-row pwd-gap">
+          <select id="reg-gender" class="login-input">
+            <option value="保密">性别：保密</option>
+            <option value="男">性别：男</option>
+            <option value="女">性别：女</option>
+          </select>
+          <input type="number" id="reg-age" class="login-input" min="1" max="120" placeholder="年龄（选填）">
+        </div>
+        <input type="tel" id="reg-phone" class="login-input reg-field pwd-gap" maxlength="11"
+               placeholder="手机号（选填）" autocomplete="off">
         <input type="password" id="reg-password" class="login-input reg-field pwd-gap" maxlength="20"
                placeholder="密码（6-20 位）" autocomplete="new-password">
         <input type="password" id="reg-password2" class="login-input reg-field pwd-gap" maxlength="20"

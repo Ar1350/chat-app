@@ -98,6 +98,10 @@ db.users.forEach(u => {
     u.salt = u.salt || null;
     u.lastLoginAt = u.lastLoginAt || null;
   }
+  // 补齐资料字段
+  if (!u.gender) u.gender = '保密';
+  if (u.age === undefined) u.age = null;
+  if (u.phone === undefined) u.phone = '';
 });
 
 function pubMe(u) {
@@ -312,6 +316,20 @@ io.on('connection', socket => {
 
 // ---------------- HTTP API：注册 ----------------
 
+// 校验并规范用户资料字段（注册与后台修改共用），返回 { ok, error?, data? }
+function parseProfileFields(body, { requireAll }) {
+  const gender = ['男', '女', '保密'].includes(body.gender) ? body.gender : '保密';
+  let age = body.age === '' || body.age === null || body.age === undefined ? null : parseInt(body.age, 10);
+  if (age !== null && (!Number.isInteger(age) || age < 1 || age > 120)) {
+    return { ok: false, error: '年龄需为 1-120 的数字' };
+  }
+  const phone = String(body.phone || '').trim();
+  if (phone && !/^1\d{10}$/.test(phone)) {
+    return { ok: false, error: '手机号格式不正确（11 位数字）' };
+  }
+  return { ok: true, data: { gender, age, phone } };
+}
+
 // 新用户自助注册
 app.post('/api/register', (req, res) => {
   const username = String((req.body || {}).username || '').trim();
@@ -328,6 +346,8 @@ app.post('/api/register', (req, res) => {
   if (password.length < 6 || password.length > 20) {
     return res.json({ ok: false, error: '密码需为 6-20 位' });
   }
+  const prof = parseProfileFields(req.body || {}, { requireAll: false });
+  if (!prof.ok) return res.json({ ok: false, error: prof.error });
   if (db.users.some(u => (u.username || '').toLowerCase() === username.toLowerCase())) {
     return res.json({ ok: false, error: '该账号已被注册' });
   }
@@ -338,6 +358,7 @@ app.post('/api/register', (req, res) => {
   const user = {
     uid, username, nickname: realName, realName, avatar,
     password, passwordHash: scrypt(password, salt), salt,
+    gender: prof.data.gender, age: prof.data.age, phone: prof.data.phone,
     createdAt: Date.now(), lastLoginAt: null
   };
   db.users.push(user);
@@ -380,7 +401,7 @@ app.post('/api/admin/login', (req, res) => {
   res.json({ ok: false, error: '管理员账号或密码错误' });
 });
 
-// 用户列表（含在线状态、密码明文仅供管理员查看）
+// 用户列表（全部资料，含在线状态、密码明文仅供管理员查看）
 app.get('/api/admin/users', (req, res) => {
   if (!requireAdmin(req, res)) return;
   res.json({
@@ -390,6 +411,9 @@ app.get('/api/admin/users', (req, res) => {
       username: u.username,
       realName: u.realName || u.nickname,
       avatar: u.avatar,
+      gender: u.gender || '保密',
+      age: u.age ?? null,
+      phone: u.phone || '',
       password: u.password || '',
       online: online.has(u.uid),
       createdAt: u.createdAt,
@@ -431,6 +455,8 @@ app.post('/api/admin/users/:uid/profile', (req, res) => {
   if (!realName || realName.length > 12) {
     return res.json({ ok: false, error: '实际名字需为 1-12 字' });
   }
+  const prof = parseProfileFields(req.body || {}, { requireAll: true });
+  if (!prof.ok) return res.json({ ok: false, error: prof.error });
   if (db.users.some(x => x.uid !== u.uid && (x.username || '').toLowerCase() === username.toLowerCase())) {
     return res.json({ ok: false, error: '该账号已被其他用户使用' });
   }
@@ -439,6 +465,9 @@ app.post('/api/admin/users/:uid/profile', (req, res) => {
   u.realName = realName;
   u.nickname = realName; // 聊天中显示的名字
   u.avatar = avatar;
+  u.gender = prof.data.gender;
+  u.age = prof.data.age;
+  u.phone = prof.data.phone;
   saveDB();
 
   // 同步给所有在线客户端，通讯录/聊天气泡实时更新

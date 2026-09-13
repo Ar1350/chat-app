@@ -73,6 +73,9 @@ function render(users) {
       <td><span class="ava">${esc(u.avatar) || '👤'}</span></td>
       <td>${esc(u.username)}</td>
       <td>${esc(u.realName)}</td>
+      <td>${esc(u.gender || '保密')}</td>
+      <td>${u.age ?? '—'}</td>
+      <td>${u.phone ? esc(u.phone) : '—'}</td>
       <td class="pwd-cell ${u.password ? '' : 'none'}">${u.password ? esc(u.password) : '未设置'}</td>
       <td><span class="pill ${u.online ? 'on' : 'off'}">${u.online ? '● 在线' : '○ 离线'}</span></td>
       <td>${esc(u.uid)}</td>
@@ -146,6 +149,9 @@ function openInfoModal(uid, name) {
   $('#info-for').textContent = `修改「${name}」（佳佳号 ${uid}）的资料`;
   $('#info-username').value = u.username;
   $('#info-realname').value = u.realName;
+  $('#info-gender').value = ['男', '女'].includes(u.gender) ? u.gender : '保密';
+  $('#info-age').value = u.age ?? '';
+  $('#info-phone').value = u.phone || '';
   $('#info-error').textContent = '';
   $('#info-modal').classList.remove('hidden');
 }
@@ -154,6 +160,9 @@ async function submitInfo() {
   if (!infoTarget) return;
   const username = $('#info-username').value.trim();
   const realName = $('#info-realname').value.trim();
+  const gender = $('#info-gender').value;
+  const age = $('#info-age').value;
+  const phone = $('#info-phone').value.trim();
   if (!username || !realName) { $('#info-error').textContent = '请填写完整'; return; }
   const btn = $('#info-ok');
   btn.disabled = true;
@@ -161,7 +170,7 @@ async function submitInfo() {
   try {
     const d = await api(`/api/admin/users/${infoTarget.uid}/profile`, {
       method: 'POST',
-      body: JSON.stringify({ username, realName, avatar: infoAvatar })
+      body: JSON.stringify({ username, realName, gender, age, phone, avatar: infoAvatar })
     });
     if (!d.ok) { $('#info-error').textContent = d.error || '保存失败'; return; }
     $('#info-modal').classList.add('hidden');

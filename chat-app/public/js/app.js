@@ -150,6 +150,9 @@ function doLogin(username, password) {
 async function doRegister() {
   const username = $('#reg-username').value.trim();
   const realName = $('#reg-realname').value.trim();
+  const gender = $('#reg-gender').value;
+  const age = $('#reg-age').value;
+  const phone = $('#reg-phone').value.trim();
   const p1 = $('#reg-password').value;
   const p2 = $('#reg-password2').value;
   const err = $('#reg-error');
@@ -164,7 +167,7 @@ async function doRegister() {
     const r = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, realName, password: p1, avatar: selectedAvatar })
+      body: JSON.stringify({ username, realName, gender, age, phone, password: p1, avatar: selectedAvatar })
     });
     const d = await r.json();
     if (!d.ok) { err.textContent = d.error || '注册失败'; return; }
