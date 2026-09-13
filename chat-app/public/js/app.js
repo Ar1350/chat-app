@@ -275,6 +275,23 @@ socket.on('presence', ({ uid, online, user }) => {
   renderLists();
 });
 
+// 后台删除用户：移除联系人及相关私聊会话
+socket.on('user:deleted', uid => {
+  state.users.delete(uid);
+  for (const [cid, c] of [...state.convs]) {
+    if (c.kind === 'pri' && cid.includes(uid)) state.convs.delete(cid);
+  }
+  if (state.activeId && !state.convs.has(state.activeId)) {
+    state.activeId = null;
+    $('#chat-title').textContent = '';
+    $('#chat-sub').textContent = '';
+    $('#messages').innerHTML = '';
+  }
+  renderLists();
+  updateTotalUnread();
+  if (uid) toast('一位用户已被管理员移除');
+});
+
 socket.on('message', ({ convId, message }) => {
   let conv = state.convs.get(convId);
   if (!conv && convId.startsWith('pri:')) {

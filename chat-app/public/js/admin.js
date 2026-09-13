@@ -4,10 +4,14 @@
  */
 const $ = s => document.querySelector(s);
 const TOKEN_KEY = 'jj_admin_token';
+const AVATARS = ['😀', '🐱', '🦊', '🐼', '🐨', '🦁', '🐸', '🐵', '🦄', '🐷', '🐧', '🐰', '🦉', '🐙', '🦋', '🌟'];
 
 let token = sessionStorage.getItem(TOKEN_KEY) || '';
 let pollTimer = null;
 let resetTarget = null; // 待重置密码的用户 { uid, realName }
+let infoTarget = null;  // 待修改资料的用户 { uid }
+let delTarget = null;   // 待删除的用户 { uid, realName }
+let lastUsers = [];     // 最近一次拉取的用户列表（弹窗回填用）
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -59,6 +63,7 @@ async function loadUsers() {
 }
 
 function render(users) {
+  lastUsers = users;
   const onlineCount = users.filter(u => u.online).length;
   $('#stat-total').textContent = `总用户 ${users.length}`;
   $('#stat-online').textContent = `在线 ${onlineCount}`;
@@ -73,7 +78,11 @@ function render(users) {
       <td>${esc(u.uid)}</td>
       <td>${fmtTime(u.createdAt)}</td>
       <td>${fmtTime(u.lastLoginAt)}</td>
-      <td><button class="act" data-uid="${esc(u.uid)}" data-name="${esc(u.realName)}">修改密码</button></td>
+      <td class="ops">
+        <button class="act" data-act="pwd" data-uid="${esc(u.uid)}" data-name="${esc(u.realName)}">修改密码</button>
+        <button class="act" data-act="info" data-uid="${esc(u.uid)}" data-name="${esc(u.realName)}">修改信息</button>
+        <button class="act danger" data-act="del" data-uid="${esc(u.uid)}" data-name="${esc(u.realName)}">删除</button>
+      </td>
     </tr>`).join('') || '<tr><td colspan="9" class="empty">还没有注册用户，去聊天页注册一个吧</td></tr>';
 }
 
@@ -119,6 +128,79 @@ async function submitPwd() {
   }
 }
 
+// ---------------- 修改信息弹窗 ----------------
+
+let infoAvatar = AVATARS[0];
+
+function renderInfoAvatarPicker() {
+  $('#info-avatar-picker').innerHTML = AVATARS
+    .map(a => `<div class="pick${a === infoAvatar ? ' selected' : ''}" role="button" tabindex="0" data-emoji="${a}">${a}</div>`).join('');
+}
+
+function openInfoModal(uid, name) {
+  const u = lastUsers.find(x => x.uid === uid);
+  if (!u) return;
+  infoTarget = { uid };
+  infoAvatar = u.avatar || AVATARS[0];
+  renderInfoAvatarPicker();
+  $('#info-for').textContent = `修改「${name}」（佳佳号 ${uid}）的资料`;
+  $('#info-username').value = u.username;
+  $('#info-realname').value = u.realName;
+  $('#info-error').textContent = '';
+  $('#info-modal').classList.remove('hidden');
+}
+
+async function submitInfo() {
+  if (!infoTarget) return;
+  const username = $('#info-username').value.trim();
+  const realName = $('#info-realname').value.trim();
+  if (!username || !realName) { $('#info-error').textContent = '请填写完整'; return; }
+  const btn = $('#info-ok');
+  btn.disabled = true;
+  btn.textContent = '保 存 中...';
+  try {
+    const d = await api(`/api/admin/users/${infoTarget.uid}/profile`, {
+      method: 'POST',
+      body: JSON.stringify({ username, realName, avatar: infoAvatar })
+    });
+    if (!d.ok) { $('#info-error').textContent = d.error || '保存失败'; return; }
+    $('#info-modal').classList.add('hidden');
+    infoTarget = null;
+    loadUsers();
+  } catch {
+    $('#info-error').textContent = '网络错误，请重试';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '保 存';
+  }
+}
+
+// ---------------- 删除用户弹窗 ----------------
+
+function openDelModal(uid, name) {
+  delTarget = { uid, name };
+  $('#del-for').textContent = `确定删除「${name}」（佳佳号 ${uid}）吗？`;
+  $('#del-modal').classList.remove('hidden');
+}
+
+async function submitDel() {
+  if (!delTarget) return;
+  const btn = $('#del-ok');
+  btn.disabled = true;
+  btn.textContent = '删除中...';
+  try {
+    const d = await api(`/api/admin/users/${delTarget.uid}/delete`, { method: 'POST' });
+    if (!d.ok) return;
+    $('#del-modal').classList.add('hidden');
+    delTarget = null;
+    loadUsers();
+  } catch { /* 未授权已在 api() 处理 */ }
+  finally {
+    btn.disabled = false;
+    btn.textContent = '确认删除';
+  }
+}
+
 // ---------------- 事件绑定 ----------------
 
 $('#adm-login-btn').addEventListener('click', async () => {
@@ -154,13 +236,33 @@ $('#adm-logout').addEventListener('click', showLogin);
 
 $('#user-rows').addEventListener('click', e => {
   const el = e.target.closest('.act');
-  if (el) openPwdModal(el.dataset.uid, el.dataset.name);
+  if (!el) return;
+  const { act, uid, name } = el.dataset;
+  if (act === 'pwd') openPwdModal(uid, name);
+  else if (act === 'info') openInfoModal(uid, name);
+  else if (act === 'del') openDelModal(uid, name);
+});
+
+// 修改信息：头像选择
+$('#info-avatar-picker').addEventListener('click', e => {
+  const el = e.target.closest('.pick');
+  if (!el) return;
+  infoAvatar = el.dataset.emoji;
+  renderInfoAvatarPicker();
 });
 
 $('#pwd-cancel').addEventListener('click', closePwdModal);
 $('#pwd-ok').addEventListener('click', submitPwd);
 $('#new-pwd').addEventListener('keydown', e => { if (e.key === 'Enter') submitPwd(); });
 $('#pwd-modal').addEventListener('click', e => { if (e.target === $('#pwd-modal')) closePwdModal(); });
+
+$('#info-cancel').addEventListener('click', () => { $('#info-modal').classList.add('hidden'); infoTarget = null; });
+$('#info-ok').addEventListener('click', submitInfo);
+$('#info-modal').addEventListener('click', e => { if (e.target === $('#info-modal')) { $('#info-modal').classList.add('hidden'); infoTarget = null; } });
+
+$('#del-cancel').addEventListener('click', () => { $('#del-modal').classList.add('hidden'); delTarget = null; });
+$('#del-ok').addEventListener('click', submitDel);
+$('#del-modal').addEventListener('click', e => { if (e.target === $('#del-modal')) { $('#del-modal').classList.add('hidden'); delTarget = null; } });
 
 // ---------------- 启动 ----------------
 

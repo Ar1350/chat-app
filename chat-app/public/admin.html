@@ -70,6 +70,35 @@
     </div>
   </div>
 
+  <!-- 修改信息弹窗 -->
+  <div id="info-modal" class="mask hidden">
+    <div class="modal">
+      <h3>修改信息</h3>
+      <p class="modal-user" id="info-for"></p>
+      <div class="avatar-picker small" id="info-avatar-picker"></div>
+      <input type="text" id="info-username" class="login-input" maxlength="20" placeholder="账号">
+      <input type="text" id="info-realname" class="login-input pwd-gap" maxlength="12" placeholder="实际名字">
+      <p id="info-error" class="login-error"></p>
+      <div class="modal-btns">
+        <button id="info-cancel" class="btn-plain">取 消</button>
+        <button id="info-ok" class="login-btn">保 存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除用户确认弹窗 -->
+  <div id="del-modal" class="mask hidden">
+    <div class="modal">
+      <h3>删除用户</h3>
+      <p class="modal-user" id="del-for"></p>
+      <p class="del-warn">⚠️ 删除后该用户将立即被踢下线且无法登录，此操作不可恢复！</p>
+      <div class="modal-btns">
+        <button id="del-cancel" class="btn-plain">取 消</button>
+        <button id="del-ok" class="btn-danger">确认删除</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/admin.js"></script>
 </body>
 </html>

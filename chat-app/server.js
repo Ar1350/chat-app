@@ -415,6 +415,61 @@ app.post('/api/admin/users/:uid/password', (req, res) => {
   res.json({ ok: true });
 });
 
+// 修改用户资料（账号 / 实际名字 / 头像）
+app.post('/api/admin/users/:uid/profile', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const u = db.users.find(x => x.uid === req.params.uid);
+  if (!u) return res.json({ ok: false, error: '用户不存在' });
+
+  const username = String((req.body || {}).username || '').trim();
+  const realName = String((req.body || {}).realName || '').trim();
+  const avatar = String((req.body || {}).avatar || u.avatar || '😀').slice(0, 8);
+
+  if (!/^[\w\u4e00-\u9fa5]{2,20}$/.test(username)) {
+    return res.json({ ok: false, error: '账号需为 2-20 位字母、数字、下划线或中文' });
+  }
+  if (!realName || realName.length > 12) {
+    return res.json({ ok: false, error: '实际名字需为 1-12 字' });
+  }
+  if (db.users.some(x => x.uid !== u.uid && (x.username || '').toLowerCase() === username.toLowerCase())) {
+    return res.json({ ok: false, error: '该账号已被其他用户使用' });
+  }
+
+  u.username = username;
+  u.realName = realName;
+  u.nickname = realName; // 聊天中显示的名字
+  u.avatar = avatar;
+  saveDB();
+
+  // 同步给所有在线客户端，通讯录/聊天气泡实时更新
+  io.emit('presence', { uid: u.uid, online: online.has(u.uid), user: pubUser(u) });
+  console.log(`[后台] 管理员修改了 ${realName}(${username}) 的资料`);
+  res.json({ ok: true });
+});
+
+// 删除用户（移出所有群、在线则踢下线，全员实时同步）
+app.post('/api/admin/users/:uid/delete', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const uid = req.params.uid;
+  const u = db.users.find(x => x.uid === uid);
+  if (!u) return res.json({ ok: false, error: '用户不存在' });
+
+  db.users = db.users.filter(x => x.uid !== uid);
+  db.groups.forEach(g => { g.members = g.members.filter(m => m !== uid); });
+  for (const [t, tu] of userTokens) if (tu === uid) userTokens.delete(t);
+  saveDB();
+
+  const sid = online.get(uid);
+  if (sid) {
+    const s = io.sockets.sockets.get(sid);
+    if (s) { s.emit('force_logout'); s.disconnect(true); }
+  }
+  online.delete(uid);
+  io.emit('user:deleted', uid);
+  console.log(`[后台] 管理员删除了用户 ${u.nickname}(${u.username}/${uid})`);
+  res.json({ ok: true });
+});
+
 // 后台页面
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
