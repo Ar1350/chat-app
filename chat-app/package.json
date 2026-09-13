@@ -1,0 +1,13 @@
+{
+  "name": "jiajia-chat",
+  "version": "1.0.0",
+  "description": "一个类似 QQ / 微信的实时聊天软件",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.8.0"
+  }
+}

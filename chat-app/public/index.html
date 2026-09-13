@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>佳佳聊天</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ============ 登录页 ============ -->
+  <div id="login-overlay">
+    <div class="login-card">
+      <div class="login-logo">💬</div>
+      <h1 class="login-title">佳佳聊天</h1>
+      <p class="login-sub">像 QQ、微信一样，随时开聊</p>
+
+      <div class="avatar-picker" id="avatar-picker"></div>
+
+      <input type="text" id="nickname-input" class="login-input" maxlength="12"
+             placeholder="输入你的昵称，例如：小明" autocomplete="off">
+
+      <button id="login-btn" class="login-btn">进 入 聊 天</button>
+      <p class="login-tip">💡 想体验聊天效果？再开一个浏览器窗口，用另一个昵称登录即可</p>
+      <p id="login-error" class="login-error"></p>
+    </div>
+  </div>
+
+  <!-- ============ 主界面 ============ -->
+  <div id="app" class="app hidden">
+
+    <!-- 最左：导航栏 -->
+    <nav class="nav-bar">
+      <div class="nav-avatar" id="nav-avatar" title="我的资料"></div>
+      <button class="nav-item active" data-view="chats" title="聊天">
+        <span class="nav-icon">💬</span>
+        <span class="nav-badge hidden" id="nav-chat-badge"></span>
+      </button>
+      <button class="nav-item" data-view="contacts" title="通讯录">
+        <span class="nav-icon">👥</span>
+      </button>
+      <div class="nav-spacer"></div>
+      <button class="nav-item nav-logout" id="logout-btn" title="退出登录">
+        <span class="nav-icon">⏻</span>
+      </button>
+    </nav>
+
+    <!-- 第二栏：会话 / 联系人列表 -->
+    <section class="list-panel">
+      <header class="list-header">
+        <h2 id="list-title">聊天</h2>
+        <button class="list-add" id="add-btn" title="发起群聊">＋</button>
+      </header>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="search-input" placeholder="搜索">
+      </div>
+      <div class="list-body" id="conv-list"></div>
+      <div class="list-body hidden" id="contact-list"></div>
+    </section>
+
+    <!-- 第三栏：聊天窗口 -->
+    <section class="chat-panel" id="chat-panel">
+      <!-- 空状态 -->
+      <div class="empty-state" id="empty-state">
+        <div class="empty-logo">💬</div>
+        <p>佳佳聊天</p>
+        <span>从左侧选择一个会话开始聊天</span>
+      </div>
+
+      <!-- 聊天内容 -->
+      <div class="chat-main hidden" id="chat-main">
+        <header class="chat-header">
+          <div class="chat-title-wrap">
+            <h3 id="chat-title"></h3>
+            <span class="chat-sub" id="chat-sub"></span>
+          </div>
+        </header>
+
+        <div class="messages" id="messages"></div>
+        <div class="typing-bar hidden" id="typing-bar"></div>
+
+        <div class="composer">
+          <div class="composer-tools">
+            <button class="tool-btn" id="emoji-btn" title="表情">😊</button>
+            <button class="tool-btn" id="image-btn" title="发送图片">🖼️</button>
+            <input type="file" id="image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+          </div>
+          <div class="emoji-panel hidden" id="emoji-panel"></div>
+          <textarea id="msg-input" rows="3" placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+          <div class="composer-footer">
+            <span class="composer-hint">Enter 发送</span>
+            <button class="send-btn" id="send-btn">发 送</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 创建群聊弹层 -->
+  <div class="modal-mask hidden" id="group-modal">
+    <div class="modal">
+      <h3>发起群聊</h3>
+      <input type="text" id="group-name-input" class="modal-input" maxlength="12" placeholder="群名称（可选）">
+      <div class="modal-list" id="group-user-list"></div>
+      <div class="modal-footer">
+        <button class="modal-btn cancel" id="group-cancel">取消</button>
+        <button class="modal-btn ok" id="group-ok">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图片大图查看 -->
+  <div class="lightbox hidden" id="lightbox"><img id="lightbox-img" alt=""></div>
+
+  <!-- 轻提示 -->
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

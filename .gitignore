@@ -1,0 +1,13 @@
+# 依赖包（体积巨大，不上传）
+node_modules/
+
+# 运行时数据与用户上传的图片
+chat-app/data/
+chat-app/uploads/
+
+# 本地凭据与临时脚本（含 GitHub 令牌，切勿上传）
+.gh_*
+
+# 系统文件
+Thumbs.db
+.DS_Store
