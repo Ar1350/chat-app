@@ -1,0 +1,11 @@
+# Linux/macOS 启动脚本必须为 LF，否则在麒麟/UOS 上会报 bad interpreter
+*.sh text eol=lf
+*.command text eol=lf
+*.desktop text eol=lf
+
+# Windows 批处理保持 CRLF
+*.bat text eol=crlf
+
+# 二进制
+*.png binary
+*.ico binary

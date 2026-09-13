@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=佳佳聊天
+Name[zh_CN]=佳佳聊天
+Comment=佳佳聊天客户端
+Comment[zh_CN]=佳佳聊天客户端
+Exec=__DIR__/start-client.sh
+Icon=__DIR__/icon.png
+Terminal=false
+Categories=Network;InstantMessaging;Chat;
+StartupNotify=true

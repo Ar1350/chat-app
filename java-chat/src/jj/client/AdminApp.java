@@ -11,6 +11,7 @@ import java.util.Enumeration;
 public class AdminApp {
 
     public static void main(String[] args) {
+        ChatApp.applyArgs(args);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             // 逻辑字体 Dialog：中文走雅黑回退、emoji 走 Segoe UI 符号回退

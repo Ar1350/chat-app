@@ -5,9 +5,12 @@ node_modules/
 chat-app/data/
 chat-app/uploads/
 
-# Java 桌面版：编译输出与运行时数据（含用户资料/消息/文件，切勿上传）
+# Java 桌面版：编译输出、打包产物与运行时数据（含用户资料/消息/文件，切勿上传）
 java-chat/out/
 java-chat/data/
+java-chat/dist/
+java-chat/manifest.mf
+java-chat/sources.txt
 
 # 本地凭据与临时脚本（含 GitHub 令牌，切勿上传）
 .gh_*

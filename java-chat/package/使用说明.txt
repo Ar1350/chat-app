@@ -1,0 +1,35 @@
+佳佳聊天 1.0.0 · 使用说明
+========================================
+
+【三种使用方式】
+
+一、Windows 用户（最简单）
+  使用另一个压缩包「JiaJiaChat-windows-x64.zip」：
+  解压后双击其中的 exe 即可，已内置 Java 运行环境，无需安装任何东西。
+    佳佳聊天.exe        —— 聊天客户端
+    佳佳聊天-服务端.exe  —— 服务器（先启动它，再开客户端）
+    佳佳管理后台.exe    —— 用户管理（默认管理员 admin / admin123）
+
+二、Linux 用户（统信 UOS、银河麒麟、Ubuntu 等，x86_64 与 ARM64 通用）
+  前置条件：系统装有 JDK/JRE 21（没有时：sudo apt install openjdk-21-jre）。
+  1. 解压本压缩包，进入 linux 目录
+  2. 首次使用执行一次：
+       chmod +x *.sh
+       bash 安装桌面图标.sh         # 在开始菜单添加三个入口（可选）
+  3. 启动：
+       ./start-server.sh            # 先启动服务器
+       ./start-client.sh            # 再启动客户端
+  局域网内其他电脑连接服务器时：
+       ./start-client.sh --host=服务器IP --port=9300
+
+三、需要 .deb / .rpm 安装包或 ARM 版内置 Java 安装包
+  在对应系统（x86 或 ARM 的麒麟/UOS）上，用源码里的 package/build-linux.sh 一键生成：
+       bash build-linux.sh deb       # UOS/麒麟桌面/Ubuntu
+       bash build-linux.sh rpm       # 麒麟高级服务器 V10
+       bash build-linux.sh app-image # 免安装绿色目录
+
+【数据位置】
+  服务器的账号、消息、文件都保存在启动目录下的 data/ 文件夹中，请注意备份。
+
+【默认账号】
+  管理员：admin / admin123

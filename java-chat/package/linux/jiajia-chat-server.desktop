@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=佳佳聊天-服务端
+Name[zh_CN]=佳佳聊天-服务端
+Comment=佳佳聊天服务端（关闭终端窗口即停止）
+Comment[zh_CN]=佳佳聊天服务端（关闭终端窗口即停止）
+Exec=__DIR__/start-server.sh
+Icon=__DIR__/icon.png
+Terminal=true
+Categories=Network;Server;
+StartupNotify=true

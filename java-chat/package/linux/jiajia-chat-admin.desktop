@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=佳佳管理后台
+Name[zh_CN]=佳佳管理后台
+Comment=佳佳聊天用户管理
+Comment[zh_CN]=佳佳聊天用户管理
+Exec=__DIR__/start-admin.sh
+Icon=__DIR__/icon.png
+Terminal=false
+Categories=System;Settings;
+StartupNotify=true

@@ -33,7 +33,8 @@ import java.util.Map;
  */
 public class ChatServer {
 
-    static final int PORT = 9300;
+    /** 端口可用 -Dchat.port=9300 覆盖（Linux/国产系统部署常用） */
+    static final int PORT = Integer.getInteger("chat.port", 9300);
     static final Path DB_FILE = Paths.get("data", "db-java.json");
     static final Path WEB_DB = Paths.get("..", "chat-app", "data", "db.json");
 

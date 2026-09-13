@@ -8,8 +8,24 @@ import javax.swing.UIManager;
  */
 public class ChatApp {
 
-    public static final String HOST = "127.0.0.1";
-    public static final int PORT = 9300;
+    /** 服务器地址：默认本机；可用 -Dchat.host=IP 或启动参数 --host=IP 覆盖（局域网部署用） */
+    public static String HOST = System.getProperty("chat.host", "127.0.0.1");
+    public static int PORT = parseIntOr(System.getProperty("chat.port"), 9300);
+
+    /** 解析启动参数 --host=x.x.x.x / --port=9300，供聊天端与管理端共用 */
+    public static void applyArgs(String[] args) {
+        if (args == null) return;
+        for (String a : args) {
+            if (a == null) continue;
+            if (a.startsWith("--host=")) HOST = a.substring("--host=".length()).trim();
+            else if (a.startsWith("--port=")) PORT = parseIntOr(a.substring("--port=".length()).trim(), PORT);
+        }
+    }
+
+    private static int parseIntOr(String s, int def) {
+        try { return s == null || s.isEmpty() ? def : Integer.parseInt(s.trim()); }
+        catch (NumberFormatException e) { return def; }
+    }
 
     /** 可选的通用 emoji 表情（与网页版一致） */
     public static final String[] EMOJIS = {
@@ -27,6 +43,7 @@ public class ChatApp {
     };
 
     public static void main(String[] args) {
+        applyArgs(args);
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             // 全局字体设为微软雅黑，中文显示更好
