@@ -18,3 +18,9 @@ java-chat/sources.txt
 # 系统文件
 Thumbs.db
 .DS_Store
+
+# 下载到仓库根目录的成品发行包及其解压目录（二进制产物走 GitHub Releases）
+/JiaJiaChat-*.zip
+/jiajia-chat-*-crossplatform.zip
+/JiaJiaChat-*/
+
