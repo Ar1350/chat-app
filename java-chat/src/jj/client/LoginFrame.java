@@ -1,7 +1,5 @@
 package jj.client;
-
 import jj.common.Json;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -31,6 +29,7 @@ import java.util.Map;
 /**
  * 窗口式登录 / 注册界面
  */
+@SuppressWarnings("unused")
 public class LoginFrame extends JFrame implements ChatClient.Listener {
 
     private static final Color GREEN = new Color(0x07, 0xC1, 0x60);
@@ -44,14 +43,13 @@ public class LoginFrame extends JFrame implements ChatClient.Listener {
     private final HintTextField loginUser = new HintTextField("请输入账号");
     private final HintPasswordField loginPass = new HintPasswordField("请输入密码");
     private final JLabel loginErr = new JLabel(" ");
-
     // 注册表单
-    private final HintTextField regUser = new HintTextField("设置账号（字母/数字，3-20 位）");
+    private final HintTextField regUser = new HintTextField("设置账号（字母/数字,3-20 位）");
     private final HintTextField regRealName = new HintTextField("实际名字");
     private final JComboBox<String> regGender = new JComboBox<>(new String[]{"性别", "保密", "男", "女"});
     private final HintTextField regAge = new HintTextField("年龄");
     private final HintTextField regPhone = new HintTextField("手机号（选填）");
-    private final HintPasswordField regPass = new HintPasswordField("设置密码（6-20 位）");
+    private final HintPasswordField regPass = new HintPasswordField("设置密码(6-20 位)");
     private final HintPasswordField regPass2 = new HintPasswordField("再次输入密码");
     private final JLabel regErr = new JLabel(" ");
     private final java.util.List<JButton> avatarBtns = new java.util.ArrayList<>();
