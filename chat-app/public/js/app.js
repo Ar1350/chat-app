@@ -25,7 +25,8 @@ const state = {
   convs: new Map(),       // convId -> conv
   activeId: null,
   view: 'chats',
-  logging: false
+  logging: false,
+  auth: null              // { token, username, password }（password 仅存内存，用于断线静默重连）
 };
 
 // 已读游标按账号隔离（同一浏览器多开不同账号时互不干扰）
@@ -105,44 +106,85 @@ function calcUnread(conv) {
   return conv.messages.filter(m => m.from && m.from !== state.me.uid && m.time > cur).length;
 }
 
-// ---------------- 登录 ----------------
+// ---------------- 登录 / 注册 ----------------
+let selectedAvatar = AVATARS[0];
+
 function renderAvatarPicker() {
   $('#avatar-picker').innerHTML = AVATARS
     .map((a, i) => `<div class="pick${i === 0 ? ' selected' : ''}" role="button" data-emoji="${a}">${a}</div>`).join('');
-  let selected = AVATARS[0];
   $('#avatar-picker').addEventListener('click', e => {
     const el = e.target.closest('.pick');
     if (!el) return;
     $$('.avatar-picker .pick').forEach(p => p.classList.remove('selected'));
     el.classList.add('selected');
-    selected = el.dataset.emoji;
-  });
-  $('#login-btn').addEventListener('click', () => doLogin(selected));
-  $('#nickname-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin(selected);
+    selectedAvatar = el.dataset.emoji;
   });
 }
 
-function doLogin(avatar, nickname) {
-  const name = (nickname ?? $('#nickname-input').value).trim();
-  if (!name) { $('#login-error').textContent = '请输入昵称'; return; }
+function setLoginBusy(busy) {
+  $('#login-btn').disabled = busy;
+  $('#login-btn').textContent = busy ? '登 录 中...' : '登 录';
+}
+
+function doLogin(username, password) {
   if (state.logging) return;
+  if (!username || !password) { $('#login-error').textContent = '请输入账号和密码'; return; }
   state.logging = true;
   $('#login-error').textContent = '';
-  $('#login-btn').disabled = true;
-  $('#login-btn').textContent = '登 录 中...';
-  socket.emit('login', { nickname: name, avatar }, res => {
+  setLoginBusy(true);
+  socket.emit('login', { username, password }, res => {
     state.logging = false;
-    $('#login-btn').disabled = false;
-    $('#login-btn').textContent = '进 入 聊 天';
+    setLoginBusy(false);
     if (!res || !res.ok) {
       $('#login-error').textContent = (res && res.error) || '登录失败，请重试';
       return;
     }
-    // 仅保存在当前标签页（sessionStorage 不跨标签页共享，避免多开串号）
-    sessionStorage.setItem('jj_profile', JSON.stringify({ nickname: name, avatar }));
+    // 令牌存 sessionStorage（仅当前标签页），密码只放内存用于断线静默重连
+    state.auth = { token: res.token, username, password };
+    sessionStorage.setItem('jj_auth', JSON.stringify({ token: res.token, username }));
     enterApp(res);
   });
+}
+
+// 注册：调用后端接口，成功后自动登录
+async function doRegister() {
+  const username = $('#reg-username').value.trim();
+  const realName = $('#reg-realname').value.trim();
+  const p1 = $('#reg-password').value;
+  const p2 = $('#reg-password2').value;
+  const err = $('#reg-error');
+  err.textContent = '';
+  if (!username || !realName || !p1 || !p2) { err.textContent = '请填写完整信息'; return; }
+  if (p1 !== p2) { err.textContent = '两次输入的密码不一致'; return; }
+
+  const btn = $('#register-btn');
+  btn.disabled = true;
+  btn.textContent = '注 册 中...';
+  try {
+    const r = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, realName, password: p1, avatar: selectedAvatar })
+    });
+    const d = await r.json();
+    if (!d.ok) { err.textContent = d.error || '注册失败'; return; }
+    toast('注册成功，自动登录中...');
+    doLogin(username, p1);
+  } catch {
+    err.textContent = '网络错误，请重试';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '注 册';
+  }
+}
+
+// 登录 / 注册选项卡切换
+function switchAuthTab(mode) {
+  $$('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  $('#login-form').classList.toggle('hidden', mode !== 'login');
+  $('#register-form').classList.toggle('hidden', mode !== 'register');
+  $('#login-error').textContent = '';
+  $('#reg-error').textContent = '';
 }
 
 function enterApp(data) {
@@ -178,29 +220,49 @@ function roughUnread(conv, last) {
   if (last && last.from && last.from !== state.me.uid && last.time > cur) conv.unread = 1;
 }
 
-// 连接建立：首次连接可自动登录，断线重连用内存中的身份静默重新认证
+// 连接建立：首次连接用 sessionStorage 令牌自动登录；断线重连用内存中的令牌/密码静默重新认证
 let didAutoLogin = false;
 socket.on('connect', () => {
-  if (state.me) {
-    // 重连：用内存身份重新认证，不读取存储（防止多标签页串号）
-    socket.emit('login', { nickname: state.me.nickname, avatar: state.me.avatar }, res => {
+  if (state.me && state.auth) {
+    // 重连：先试令牌，失败则用内存中的账号密码重新登录
+    socket.emit('login', { token: state.auth.token }, res => {
       if (res && res.ok) {
         res.users.forEach(u => state.users.set(u.uid, u));
         if (state.activeId) updateChatHeader();
         renderLists();
+        return;
       }
+      socket.emit('login', { username: state.auth.username, password: state.auth.password }, res2 => {
+        if (res2 && res2.ok) {
+          state.auth.token = res2.token;
+          sessionStorage.setItem('jj_auth', JSON.stringify({ token: res2.token, username: state.auth.username }));
+          res2.users.forEach(u => state.users.set(u.uid, u));
+          if (state.activeId) updateChatHeader();
+          renderLists();
+        }
+      });
     });
-  } else if (!didAutoLogin) {
+  } else if (!state.me && !didAutoLogin) {
     didAutoLogin = true;
-    const saved = JSON.parse(sessionStorage.getItem('jj_profile') || 'null');
-    if (saved) doLogin(saved.avatar, saved.nickname);
+    const saved = JSON.parse(sessionStorage.getItem('jj_auth') || 'null');
+    if (saved) {
+      // 自动登录失败（令牌过期等）则留在登录页
+      socket.emit('login', { token: saved.token }, res => {
+        if (res && res.ok) {
+          state.auth = { token: res.token, username: saved.username, password: '' };
+          enterApp(res);
+        } else {
+          sessionStorage.removeItem('jj_auth');
+        }
+      });
+    }
   }
 });
 
 // 同一账号在其他标签页登录，被服务端踢下线
 socket.on('force_logout', () => {
   toast('你的账号已在其他页面登录');
-  sessionStorage.removeItem('jj_profile');
+  sessionStorage.removeItem('jj_auth');
   setTimeout(() => location.reload(), 1500);
 });
 
@@ -471,11 +533,11 @@ function bindEvents() {
   });
 
   $('#logout-btn').addEventListener('click', () => {
-    sessionStorage.removeItem('jj_profile');
+    sessionStorage.removeItem('jj_auth');
     location.reload();
   });
   $('#nav-avatar').addEventListener('click', () => {
-    if (state.me) toast(`我是 ${state.me.nickname}，佳佳号：${state.me.uid}`);
+    if (state.me) toast(`我是 ${state.me.realName}（账号：${state.me.username}），佳佳号：${state.me.uid}`);
   });
   $('#add-btn').addEventListener('click', openGroupModal);
   $('#search-input').addEventListener('input', renderLists);
@@ -585,12 +647,19 @@ function bindEvents() {
 // ---------------- 启动 ----------------
 renderAvatarPicker();
 bindEvents();
-const savedProfile = JSON.parse(sessionStorage.getItem('jj_profile') || 'null');
-if (savedProfile) {
-  $('#nickname-input').value = savedProfile.nickname;
-  const pick = $(`.avatar-picker .pick[data-emoji="${savedProfile.avatar}"]`);
-  if (pick) {
-    $$('.avatar-picker .pick').forEach(p => p.classList.remove('selected'));
-    pick.classList.add('selected');
-  }
-}
+
+// 登录 / 注册表单绑定
+$('#login-btn').addEventListener('click', () => {
+  doLogin($('#login-username').value.trim(), $('#login-password').value);
+});
+$('#login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') $('#login-btn').click();
+});
+$('#login-username').addEventListener('keydown', e => {
+  if (e.key === 'Enter') $('#login-password').focus();
+});
+$$('.auth-tab').forEach(t => t.addEventListener('click', () => switchAuthTab(t.dataset.mode)));
+$('#register-btn').addEventListener('click', doRegister);
+$('#reg-password2').addEventListener('keydown', e => {
+  if (e.key === 'Enter') $('#register-btn').click();
+});

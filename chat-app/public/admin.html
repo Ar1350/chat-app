@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>佳佳聊天 · 管理后台</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <!-- 管理员登录 -->
+  <div id="admin-login" class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">🛡️</div>
+      <h1 class="login-title">管理后台</h1>
+      <p class="login-sub">佳佳聊天用户管理</p>
+      <input type="text" id="adm-user" class="login-input" placeholder="管理员账号" autocomplete="username">
+      <input type="password" id="adm-pass" class="login-input pwd-gap" placeholder="密码" autocomplete="current-password">
+      <button id="adm-login-btn" class="login-btn">登 录</button>
+      <p id="adm-error" class="login-error"></p>
+      <a class="back-link" href="/">← 返回聊天</a>
+    </div>
+  </div>
+
+  <!-- 后台主界面 -->
+  <div id="admin-app" class="hidden">
+    <header class="topbar">
+      <h1>🛡️ 佳佳聊天 · 管理后台</h1>
+      <div class="stats">
+        <span class="stat" id="stat-total">总用户 0</span>
+        <span class="stat online" id="stat-online">在线 0</span>
+      </div>
+      <button id="adm-logout" class="logout-btn">退出登录</button>
+    </header>
+
+    <main class="content">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>用户</th>
+            <th>账号</th>
+            <th>实际名字</th>
+            <th>密码</th>
+            <th>状态</th>
+            <th>佳佳号</th>
+            <th>注册时间</th>
+            <th>最后登录</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="user-rows">
+          <tr><td colspan="9" class="empty">加载中...</td></tr>
+        </tbody>
+      </table>
+    </main>
+  </div>
+
+  <!-- 修改密码弹窗 -->
+  <div id="pwd-modal" class="mask hidden">
+    <div class="modal">
+      <h3>修改密码</h3>
+      <p class="modal-user" id="pwd-for"></p>
+      <input type="text" id="new-pwd" class="login-input" maxlength="20" placeholder="输入新密码（6-20 位）">
+      <p id="pwd-error" class="login-error"></p>
+      <div class="modal-btns">
+        <button id="pwd-cancel" class="btn-plain">取 消</button>
+        <button id="pwd-ok" class="login-btn">保 存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

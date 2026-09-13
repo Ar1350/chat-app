@@ -9,21 +9,45 @@
 </head>
 <body>
 
-  <!-- ============ 登录页 ============ -->
+  <!-- ============ 登录页（登录 / 注册） ============ -->
   <div id="login-overlay">
     <div class="login-card">
       <div class="login-logo">💬</div>
       <h1 class="login-title">佳佳聊天</h1>
       <p class="login-sub">像 QQ、微信一样，随时开聊</p>
 
-      <div class="avatar-picker" id="avatar-picker"></div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-mode="login">登 录</button>
+        <button class="auth-tab" data-mode="register">注 册</button>
+      </div>
 
-      <input type="text" id="nickname-input" class="login-input" maxlength="12"
-             placeholder="输入你的昵称，例如：小明" autocomplete="off">
+      <!-- 登录表单 -->
+      <div id="login-form">
+        <input type="text" id="login-username" class="login-input"
+               placeholder="账号" autocomplete="username">
+        <input type="password" id="login-password" class="login-input pwd-gap"
+               placeholder="密码" autocomplete="current-password">
+        <button id="login-btn" class="login-btn">登 录</button>
+        <p class="login-tip">没有账号？点上方「注册」创建一个</p>
+        <p id="login-error" class="login-error"></p>
+      </div>
 
-      <button id="login-btn" class="login-btn">进 入 聊 天</button>
-      <p class="login-tip">💡 想体验聊天效果？再开一个浏览器窗口，用另一个昵称登录即可</p>
-      <p id="login-error" class="login-error"></p>
+      <!-- 注册表单 -->
+      <div id="register-form" class="hidden">
+        <div class="avatar-picker" id="avatar-picker"></div>
+        <input type="text" id="reg-username" class="login-input reg-field" maxlength="20"
+               placeholder="账号（2-20 位字母/数字/下划线/中文）" autocomplete="off">
+        <input type="text" id="reg-realname" class="login-input reg-field pwd-gap" maxlength="12"
+               placeholder="实际名字（聊天中显示的昵称）" autocomplete="off">
+        <input type="password" id="reg-password" class="login-input reg-field pwd-gap" maxlength="20"
+               placeholder="密码（6-20 位）" autocomplete="new-password">
+        <input type="password" id="reg-password2" class="login-input reg-field pwd-gap" maxlength="20"
+               placeholder="确认密码" autocomplete="new-password">
+        <button id="register-btn" class="login-btn">注 册</button>
+        <p id="reg-error" class="login-error"></p>
+      </div>
+
+      <a class="admin-link" href="/admin">管理员入口 →</a>
     </div>
   </div>
 
